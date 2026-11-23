@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paletas Wey — Ice Cream Delivery Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6f8;          /* page background */
+    --surface:#ffffff;     /* cards / panels */
+    --surface-2:#f9fafb;   /* subtle fills, header rows */
+    --border:#e4e7ec;      /* hairlines */
+    --border-2:#d0d5dd;
+    --text:#101828;        /* primary slate */
+    --muted:#667085;       /* secondary text */
+    --brand:#d94f3d;       /* Paletas Wey coral */
+    /* status palette (tinted-badge style) */
+    --ok:#067647;   --ok-bg:#ecfdf3;   --ok-bd:#abefc6;
+    --proc:#175cd3; --proc-bg:#eff8ff; --proc-bd:#b2ddff;
+    --tbd:#5925dc;  --tbd-bg:#f4f3ff;  --tbd-bd:#d9d6fe;
+    --pend:#b54708; --pend-bg:#fffaeb; --pend-bd:#fedf89;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    padding:clamp(16px,4vw,40px);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1480px;margin:0 auto}
+  /* Header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    margin-bottom:26px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:14px}
+  .scoop{width:52px;height:52px;border-radius:12px;overflow:hidden;flex:0 0 auto;
+    border:1px solid var(--border);box-shadow:0 1px 2px rgba(16,24,40,.06)}
+  .scoop img{width:100%;height:100%;object-fit:cover;display:block}
+  h1{font-family:'Inter',sans-serif;font-weight:700;font-size:clamp(20px,3vw,26px);letter-spacing:-.02em;line-height:1.1;color:var(--text)}
+  .eyebrow{font-size:11px;letter-spacing:.14em;color:var(--brand);text-transform:uppercase;font-weight:600;margin-bottom:3px}
+  .clock{font-size:13px;color:var(--muted);text-align:right}
+  .clock b{color:var(--text);font-size:15px;display:block;font-weight:600;font-variant-numeric:tabular-nums}
+  .head-right{display:flex;align-items:center;gap:16px}
+  .lock-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:8px;
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.12s;
+    background:var(--surface);border:1px solid var(--border-2);color:var(--muted)}
+  .lock-btn:hover{background:var(--surface-2)}
+  .lock-btn.unlocked{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
+  .lock-btn .lk-ic{font-size:13px}
+  /* Password modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(16,24,40,.55);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border-radius:14px;box-shadow:0 20px 50px rgba(16,24,40,.3);
+    padding:26px 24px;width:100%;max-width:360px;text-align:center}
+  .modal-ic{font-size:26px;margin-bottom:8px}
+  .modal h2{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
+  .modal p{font-size:13.5px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+  .modal input{width:100%;padding:10px 13px;border:1px solid var(--border-2);border-radius:8px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--text);transition:.12s}
+  .modal-field{width:100%;padding:10px 13px;border:1px solid var(--border-2);border-radius:8px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--text);transition:.12s;margin-bottom:10px;background:var(--surface)}
+  select.modal-field{appearance:none;cursor:pointer;padding-right:32px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center}
+  .modal input:focus,.modal-field:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(217,79,61,.15)}
+  #up-paste,#up-pk-paste{width:100%;padding:9px 11px;border:1px solid var(--border-2);border-radius:8px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);resize:vertical;line-height:1.5}
+  #up-paste:focus,#up-pk-paste:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(217,79,61,.15)}
+  .up-tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin:4px 0 16px}
+  .up-tab{background:none;border:none;cursor:pointer;padding:9px 12px;font-family:'Inter',sans-serif;
+    font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+  .up-tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+  .up-sub{font-weight:600;font-size:12px;color:var(--text);margin-bottom:6px}
+  .pw-err{color:var(--brand);font-size:12.5px;font-weight:500;margin-top:8px;height:16px;text-align:left;visibility:hidden}
+  .pw-err.show{visibility:visible}
+  .modal-actions{display:flex;gap:10px;margin-top:16px}
+  .btn-ghost,.btn-solid{flex:1;padding:10px;border-radius:8px;font-family:'Inter',sans-serif;
+    font-size:14px;font-weight:600;cursor:pointer;transition:.12s;border:1px solid transparent}
+  .btn-ghost{background:var(--surface);border-color:var(--border-2);color:var(--text)}
+  .btn-ghost:hover{background:var(--surface-2)}
+  .btn-solid{background:var(--brand);color:#fff}
+  .btn-solid:hover{filter:brightness(.95)}
+  /* Stat cards */
+  .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px}
+  /* section dividers between the three zones */
+  .section-title{font-size:11.5px;font-weight:700;letter-spacing:.08em;color:var(--muted);
+    text-transform:uppercase;margin:26px 0 12px;display:flex;align-items:center;gap:12px}
+  .section-title:first-of-type{margin-top:6px}
+  .section-title::after{content:"";flex:1;height:1px;background:var(--border)}
+  .section-title.with-toggle::after{content:none}
+  .section-title .hline{flex:1;height:1px;background:var(--border)}
+  .view-toggle{display:inline-flex;border:1px solid var(--border-2);border-radius:8px;overflow:hidden;flex:0 0 auto}
+  .vt-btn{background:var(--surface);border:none;padding:6px 12px;font-family:'Inter',sans-serif;
+    font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;text-transform:none;letter-spacing:0;transition:.12s}
+  .vt-btn+.vt-btn{border-left:1px solid var(--border-2)}
+  .vt-btn:hover{background:var(--surface-2)}
+  .vt-btn.active{background:var(--brand);color:#fff}
+  .filter-panel{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;
+    padding:16px 16px 2px;margin-bottom:8px}
+  .filter-panel .filters{margin-bottom:16px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--border-2);
+    border-radius:10px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+  .stat .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .stat .v{font-family:'Inter',sans-serif;font-weight:700;font-size:30px;margin-top:6px;line-height:1;font-variant-numeric:tabular-nums;color:var(--text)}
+  .stat.total{border-top-color:var(--brand)}
+  .stat.tbd{border-top-color:var(--tbd)}   .stat.tbd .v{color:var(--tbd)}
+  .stat.proc{border-top-color:var(--proc)} .stat.proc .v{color:var(--proc)}
+  .stat.deliv{border-top-color:var(--ok)}  .stat.deliv .v{color:var(--ok)}
+  .stat.pend{border-top-color:var(--pend)} .stat.pend .v{color:var(--pend)}
+  .stat.resch{border-top-color:var(--brand)} .stat.resch .v{color:var(--brand)}
+  /* Filters */
+  .filters{display:flex;gap:12px 14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px}
+  .field{display:flex;flex-direction:column;gap:5px;min-width:130px}
+  .field .lbl{font-size:10.5px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;font-weight:600}
+  .field .datein{width:100%}
+  .field-store{flex:1 1 190px;min-width:160px}
+  .field-date{flex:1 1 320px;min-width:280px}
+  .date-row{display:flex;align-items:center;gap:7px}
+  .date-row .datein{flex:1 1 0;min-width:0;width:auto}
+  .to-sep{font-size:12px;color:var(--muted);flex:0 0 auto}
+  .driver-row{display:flex;align-items:center;gap:7px}
+  .chip{background:var(--surface);border:1px solid var(--border-2);color:var(--text);
+    padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;
+    transition:.12s;font-family:'Inter',sans-serif;}
+  .chip:hover{background:var(--surface-2);border-color:var(--muted)}
+  .chip.active{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600}
+  .chip.mine{border-color:var(--brand);color:var(--brand);font-weight:600}
+  .chip.mine.active{background:var(--brand);color:#fff}
+  /* pickup reminder banner */
+  .has-pickup td{border-bottom:none !important}
+  .pickup-row td{padding-top:8px !important}
+  .pickup{display:flex;align-items:flex-start;gap:10px;
+    background:var(--pend-bg);border:1px solid var(--pend-bd);border-left:3px solid var(--brand);
+    border-radius:8px;padding:10px 14px;}
+  .pickup .ic{font-size:16px;line-height:1.3}
+  .pickup .txt{font-size:13px;color:#5b3a12}
+  .pickup .txt b{color:var(--text);font-weight:600}
+  .pk-tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+    background:var(--brand);color:#fff;padding:2px 7px;border-radius:5px;margin-left:6px;white-space:nowrap}
+  .pk-flag{font-size:13px;margin-left:6px}
+  .pk-confirm{margin-left:auto;flex:0 0 auto;align-self:center;background:var(--ok);color:#fff;border:none;
+    border-radius:8px;padding:8px 14px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.12s}
+  .pk-confirm:hover{filter:brightness(.95)}
+  /* Date / select inputs */
+  .datein{background:var(--surface);border:1px solid var(--border-2);color:var(--text);
+    padding:6px 12px;border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;
+    cursor:pointer;color-scheme:light;transition:.12s;font-weight:500;font-variant-numeric:tabular-nums;}
+  .datein:hover{background:var(--surface-2)}
+  .datein:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(217,79,61,.15)}
+  select.datein{padding-right:30px;max-width:220px;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 11px center}
+  select.datein option{background:#fff;color:var(--text)}
+  /* Table */
+  .board{background:transparent;border:none;border-radius:0;overflow:visible;box-shadow:none}
+  table{width:100%;border-collapse:collapse}
+  thead th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;
+    color:var(--muted);text-align:left;padding:12px 18px;border-bottom:1px solid var(--border);background:transparent;}
+  tbody td{padding:14px 18px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:middle;background:var(--surface)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr{transition:.1s}
+  tbody tr:not(.spacer):hover td{background:var(--surface-2)}
+  /* bold black outline around each delivery block */
+  tbody tr:not(.pickup-row) td{border-top:0.75px solid #101828 !important}
+  tbody tr:not(.pickup-row):not(.has-pickup) td{border-bottom:0.75px solid #101828 !important}
+  tbody td:first-child{border-left:0.75px solid #101828 !important}
+  tbody td:last-child{border-right:0.75px solid #101828 !important}
+  .pickup-row td{border-bottom:0.75px solid #101828 !important}
+  /* gap between each delivery block (laptop table) */
+  tr.spacer td{height:14px;padding:0;border:none !important;background:transparent}
+  tr.spacer:hover td{background:transparent}
+  .oid{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);font-weight:500}
+  .odate{display:block;color:var(--muted);font-size:11px;margin-top:3px;font-family:'Inter',sans-serif}
+  .oresch{display:block;color:var(--brand);font-size:11px;margin-top:2px;font-weight:600;font-family:'Inter',sans-serif}
+  .proof-lnk{display:inline-block;margin-top:3px;font-size:11px;color:var(--proc);font-weight:600;text-decoration:none}
+  .proof-lnk:hover{text-decoration:underline}
+  .proof-slot{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+  .proof-slot:last-child{border-bottom:none}
+  .proof-slot .lbl2{flex:0 0 92px;font-size:12.5px;font-weight:600;color:var(--text)}
+  .proof-take{flex:1;background:var(--surface);border:1px solid var(--border-2);color:var(--text);
+    border-radius:8px;padding:9px 10px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer}
+  .proof-take:hover{background:var(--surface-2)}
+  .proof-take.done{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
+  .proof-thumb{flex:0 0 44px;width:44px;height:44px;object-fit:cover;border-radius:7px;border:1px solid var(--border);display:none}
+  .store b{display:block;font-weight:600;color:var(--text)}
+  .store span{font-size:12px;color:var(--muted)}
+  .driver{display:flex;align-items:center;gap:9px;font-weight:500}
+  .ava{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:12px;color:#fff;font-family:'Inter',sans-serif}
+  .car{font-size:12px;font-weight:500;padding:3px 9px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--muted)}
+  .car.l300{color:#b54708} .car.traga{color:#175cd3}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:16px;font-size:12.5px;font-weight:600;border:1px solid transparent;
+    font-family:'Inter',sans-serif;cursor:default;transition:filter .12s,box-shadow .12s}
+  .badge.editable{cursor:pointer}
+  .badge.editable:hover{filter:brightness(.97);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .badge .caret{font-size:10px;opacity:.7;margin-left:1px}
+  /* toast */
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(12px);
+    background:var(--text);color:#fff;padding:11px 18px;border-radius:9px;font-size:13.5px;font-weight:500;
+    box-shadow:0 8px 24px rgba(16,24,40,.28);opacity:0;pointer-events:none;transition:.2s;z-index:120}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* status picker menu */
+  .status-menu{position:absolute;z-index:50;background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;box-shadow:0 8px 24px rgba(16,24,40,.16);padding:5px;min-width:172px;display:none}
+  .status-menu.open{display:block}
+  .sm-note{font-size:11px;color:var(--muted);padding:4px 10px 6px;border-bottom:1px solid var(--border);margin-bottom:4px}
+  .sm-sep{height:1px;background:var(--border);margin:5px 0}
+  .status-menu button.sm-action{color:var(--text);font-weight:500}
+  .status-menu button.sm-action.sm-clear{color:var(--brand)}
+  .status-menu button.sm-action.sm-pick{color:var(--ok)}
+  .status-menu button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+    background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:13px;
+    font-family:'Inter',sans-serif;color:var(--text);font-weight:500}
+  .status-menu button:hover{background:var(--surface-2)}
+  .status-menu button .dot{width:8px;height:8px;border-radius:50%}
+  .status-menu button.sel{font-weight:700}
+  .driver-edit{cursor:pointer;border-radius:7px;transition:background .12s}
+  .driver-edit:hover{background:var(--surface-2)}
+  .resch-edit{cursor:pointer;text-decoration:underline dotted}
+  .resch-edit:hover{opacity:.75}
+  .resch-btn{display:inline-block;margin-top:3px;background:none;border:1px solid var(--border-2);color:var(--muted);
+    border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+  .resch-btn:hover{background:var(--surface-2);color:var(--text)}
+  .status-menu .ava-sm{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
+    border-radius:50%;color:#fff;font-size:10px;font-weight:700;flex:0 0 auto}
+  .status-menu button.sel::after{content:"✓";margin-left:auto;color:var(--brand);font-weight:700}
+  .sm-tbd .dot{background:var(--tbd)} .sm-proc .dot{background:var(--proc)}
+  .sm-deliv .dot{background:var(--ok)} .sm-pend .dot{background:var(--pend)}
+  .dot{width:7px;height:7px;border-radius:50%}
+  .b-tbd{background:var(--tbd-bg);color:var(--tbd);border-color:var(--tbd-bd)} .b-tbd .dot{background:var(--tbd)}
+  .b-proc{background:var(--proc-bg);color:var(--proc);border-color:var(--proc-bd)} .b-proc .dot{background:var(--proc);animation:pulse 1.4s infinite}
+  .b-deliv{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-bd)} .b-deliv .dot{background:var(--ok)}
+  .b-pend{background:var(--pend-bg);color:var(--pend);border-color:var(--pend-bd)} .b-pend .dot{background:var(--pend)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .empty{text-align:center;padding:40px;color:var(--muted)}
+  .qty{font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
+  footer{margin-top:18px;font-size:12px;color:var(--muted);text-align:center;letter-spacing:.02em}
+  /* Tablet */
+  @media(max-width:820px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    thead th.hide-sm,tbody td.hide-sm{display:none}
+  }
+  /* Phone: hide the table, show the purpose-built compact card list */
+  .mobile-list{display:none}
+  /* store search dropdown */
+  .store-dd{position:fixed;z-index:70;background:var(--surface);border:1px solid var(--border);
+    border-radius:9px;box-shadow:0 10px 28px rgba(16,24,40,.16);max-height:200px;overflow-y:auto;
+    padding:5px;display:none}
+  .store-dd.open{display:block}
+  .store-dd button{display:block;width:100%;text-align:left;background:none;border:none;cursor:pointer;
+    padding:9px 11px;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text)}
+  .store-dd button:hover{background:var(--surface-2)}
+  .store-dd button.sd-all{color:var(--brand);font-weight:600;border-bottom:1px solid var(--border);border-radius:0;margin-bottom:4px}
+  .store-dd .empty-opt{padding:9px 11px;color:var(--muted);font-size:12.5px}
+  /* Phone layout — applied by screen width OR the manual "Phone" toggle */
+  body.phone-mode{padding:13px}
+  body.phone-mode .clock{text-align:left}
+  body.phone-mode .filters{display:grid;grid-template-columns:1fr 1fr;gap:11px 10px;margin-bottom:14px;align-items:end}
+  body.phone-mode .field{min-width:0}
+  body.phone-mode .field-store,body.phone-mode .field-date{grid-column:1 / -1}
+  body.phone-mode .date-row{gap:6px}
+  body.phone-mode .date-row .datein{flex:1 1 auto;min-width:0}
+  body.phone-mode .date-row #date-all{flex:0 0 auto}
+  body.phone-mode #mine-btn{flex:0 0 auto}
+  body.phone-mode .stat{padding:12px 13px}
+  body.phone-mode .stat .v{font-size:23px}
+  body.phone-mode .stat .k{font-size:10px}
+  body.phone-mode .chip{padding:8px 13px;font-size:13px}
+  body.phone-mode .board{display:none}          /* laptop table hidden in phone view */
+  body.phone-mode .mobile-list{display:block}
+  body.phone-mode .mcard{background:var(--surface);border:0.75px solid #101828;border-radius:10px;
+    padding:11px 12px;margin-bottom:9px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+  body.phone-mode .mc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  body.phone-mode .mc-store b{font-size:14px;font-weight:600;color:var(--text);display:block;line-height:1.25}
+  body.phone-mode .mc-store span{font-size:11.5px;color:var(--muted);display:block;margin-top:1px}
+  body.phone-mode .mc-top .badge{flex:0 0 auto;font-size:11.5px;padding:3px 9px}
+  body.phone-mode .mc-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:9px;
+    font-size:12px;color:var(--muted)}
+  body.phone-mode .mc-driver{display:flex;align-items:center;gap:5px;color:var(--text);font-weight:500}
+  body.phone-mode .mc-meta .ava{width:20px;height:20px;font-size:10px}
+  body.phone-mode .mc-meta .car{font-size:11px;padding:2px 7px}
+  body.phone-mode .mc-qty,body.phone-mode .mc-date{font-variant-numeric:tabular-nums}
+  body.phone-mode .mc-resch{color:var(--brand);font-weight:600}
+  body.phone-mode .mcard .pickup{margin-top:9px;padding:8px 11px}
+  body.phone-mode .mcard .pickup .txt{font-size:12px}
+  /* constrain to a phone-like column when phone view is forced on a wide screen */
+  body.phone-mode.forced .wrap{max-width:440px}
+</style>
+
+<style id="unify-shell">
+  /* Unified shell: the combined dashboard supplies the brand header */
+  body > .wrap > header{display:none !important}
+  body{padding-top:18px !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="scoop"><img src="data:image/webp;base64,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" alt="Paletas Wey"></div>
+      <div>
+        <div class="eyebrow">Pengiriman Es Krim · Live</div>
+        <h1>Paletas Wey</h1>
+      </div>
+    </div>
+    <div class="head-right">
+      <button id="upload-btn" class="lock-btn" style="display:none" title="Upload today's deliveries (CSV/Excel)"><span>⬆️</span><span>Unggah</span></button>
+      <button id="refresh-btn" class="lock-btn" title="Reload from the Google Sheet"><span>🔄</span><span>Muat Ulang</span></button>
+      <input type="file" id="upload-file" accept=".csv,.xlsx,.xls" style="display:none">
+      <button id="lock-btn" class="lock-btn locked" title="Editing is locked — click to unlock">
+        <span class="lk-ic">🔒</span><span id="lock-label">Masuk untuk mengedit</span>
+      </button>
+      <div class="clock">
+        <span>Waktu kirim</span>
+        <b id="clock">--:--:--</b>
+      </div>
+    </div>
+  </header>
+  <h2 class="section-title">Ringkasan</h2>
+  <section class="stats">
+    <div class="stat total"><div class="k">Total Pesanan</div><div class="v" id="s-total">0</div></div>
+    <div class="stat tbd"><div class="k">Akan Dikirim</div><div class="v" id="s-tbd">0</div></div>
+    <div class="stat proc"><div class="k">Sedang Proses</div><div class="v" id="s-proc">0</div></div>
+    <div class="stat deliv"><div class="k">Terkirim</div><div class="v" id="s-deliv">0</div></div>
+    <div class="stat pend"><div class="k">Tertunda</div><div class="v" id="s-pend">0</div></div>
+    <div class="stat resch"><div class="k">Dijadwalkan Ulang</div><div class="v" id="s-resch">0</div></div>
+  </section>
+  <h2 class="section-title">Filter</h2>
+  <section class="filter-panel">
+  <div class="filters">
+    <div class="field field-store">
+      <label class="lbl" for="store-pick">Toko</label>
+      <input id="store-pick" class="datein" placeholder="Cari toko…" aria-label="Cari toko" autocomplete="off">
+    </div>
+    <div class="field field-date">
+      <label class="lbl">Rentang Tanggal</label>
+      <div class="date-row">
+        <input type="date" id="date-from" class="datein" aria-label="From date">
+        <span class="to-sep">sampai</span>
+        <input type="date" id="date-to" class="datein" aria-label="To date">
+        <button class="chip dt active" id="date-all" data-val="all">Semua</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="f-driver">Pengemudi</label>
+      <div class="driver-row">
+        <select id="f-driver" class="datein">
+          <option value="all">Semua pengemudi</option>
+          <option value="Alfian">Alfian</option>
+          <option value="Figo">Figo</option>
+          <option value="Sisko">Sisko</option>
+          <option value="Wayan">Wayan</option>
+          <option value="Kadek">Kadek</option>
+          <option value="Aziz">Aziz</option>
+        </select>
+        <button class="chip mine" id="mine-btn" style="display:none">★ Punya Saya</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="f-vehicle">Kendaraan</label>
+      <select id="f-vehicle" class="datein">
+        <option value="all">Semua</option>
+        <option value="Traga">Traga</option>
+        <option value="L300 (1)">L300 (1)</option>
+        <option value="L300 (2)">L300 (2)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="lbl" for="f-status">Status</label>
+      <select id="f-status" class="datein">
+        <option value="all">Semua status</option>
+        <option value="To Be Delivered">Akan Dikirim</option>
+        <option value="On Process">Sedang Proses</option>
+        <option value="Delivered">Terkirim</option>
+        <option value="Pending">Tertunda</option>
+        <option value="__resch">Dijadwalkan Ulang</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="lbl" for="f-pickup">Pengambilan</label>
+      <select id="f-pickup" class="datein">
+        <option value="all">Semua</option>
+        <option value="yes">Perlu diambil</option>
+      </select>
+    </div>
+  </div>
+  </section>
+  <h2 class="section-title with-toggle">Pengiriman<span class="hline"></span>
+    <span class="view-toggle">
+      <button class="vt-btn" data-view="laptop">🖥 Laptop</button>
+      <button class="vt-btn" data-view="phone">📱 HP</button>
+    </span>
+  </h2>
+  <div class="board">
+    <table>
+      <thead>
+        <tr>
+          <th>Pesanan</th>
+          <th>Toko &amp; Lokasi</th>
+          <th class="hide-sm">Jumlah</th>
+          <th>Pengemudi</th>
+          <th class="hide-sm">Kendaraan</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">Tidak ada pengiriman yang cocok dengan filter.</div>
+  </div>
+  <!-- compact card list, shown only on phones -->
+  <div class="mobile-list" id="cards"></div>
+  <footer>6 pengemudi · 3 kendaraan · 412 toko di Bali</footer>
+</div>
+<div class="modal-overlay" id="up-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="up-title" style="max-width:460px;text-align:left">
+    <div class="modal-ic" style="text-align:center">⬆️</div>
+    <h2 id="up-title" style="text-align:center">Unggah</h2>
+    <div class="up-tabs">
+      <button class="up-tab active" data-uptab="del">Pengiriman</button>
+      <button class="up-tab" data-uptab="pick">Reject / Hampir Kadaluarsa</button>
+    </div>
+    <!-- Deliveries -->
+    <div class="up-pane" id="up-pane-del">
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:12px">
+        Kolom: <b>store, location, driver, vehicle, date, qty</b> (dengan baris judul).
+        Tanggal <b>YYYY-MM-DD</b>. Status ditentukan dari tanggal. Baris akan <b>ditambahkan</b>.
+      </p>
+      <div class="up-sub">Tempel dari Excel/Sheets (sertakan baris judul)</div>
+      <textarea id="up-paste" rows="5" placeholder="store	location	driver	vehicle	date	qty&#10;ADI SHOP	Amed	Alfian	Traga	2026-07-24	24"></textarea>
+      <button class="btn-solid sm-btn" id="up-paste-add" style="width:100%;margin:8px 0 16px">Tambah pengiriman</button>
+      <div class="up-sub">Atau unggah file (buka di browser penuh)</div>
+      <button class="btn-ghost sm-btn" id="up-choose" style="width:100%;margin-bottom:8px">Pilih file CSV / Excel…</button>
+      <button class="btn-ghost sm-btn" id="up-template" style="width:100%">⬇️ Unduh template (CSV)</button>
+    </div>
+    <!-- Pickups -->
+    <div class="up-pane" id="up-pane-pick" style="display:none">
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:12px">
+        Tandai barang untuk diambil pada pengiriman yang ada. Kolom: <b>store, date, reason, qty, note</b>
+        (reason = Rejected atau Nearly expired). Dicocokkan berdasarkan toko + tanggal. Tanggal <b>YYYY-MM-DD</b>.
+      </p>
+      <div class="up-sub">Tempel dari Excel/Sheets (sertakan baris judul)</div>
+      <textarea id="up-pk-paste" rows="5" placeholder="store	date	reason	qty	note&#10;ADI SHOP	2026-07-24	Rejected	3	Melted tubs to collect"></textarea>
+      <button class="btn-solid sm-btn" id="up-pk-add" style="width:100%;margin:8px 0 16px">Tambah pengambilan</button>
+      <div class="up-sub">Atau unggah file (buka di browser penuh)</div>
+      <button class="btn-ghost sm-btn" id="up-pk-choose" style="width:100%;margin-bottom:8px">Pilih file CSV / Excel…</button>
+      <button class="btn-ghost sm-btn" id="up-pk-template" style="width:100%">⬇️ Unduh template (CSV)</button>
+    </div>
+    <div class="pw-err" id="up-err" style="text-align:left"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="up-cancel">Tutup</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="proof-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="proof-title" style="max-width:420px">
+    <div class="modal-ic">📷</div>
+    <h2 id="proof-title">Bukti Pengiriman</h2>
+    <p id="proof-sub">Ambil minimal 2 dari 3 dokumen untuk menandai pengiriman ini Terkirim.</p>
+    <div id="proof-slots"></div>
+    <div class="pw-err" id="proof-err"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="proof-cancel">Batal</button>
+      <button class="btn-solid" id="proof-confirm" disabled>Konfirmasi terkirim</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="rs-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rs-title">
+    <div class="modal-ic">🗓</div>
+    <h2 id="rs-title">Jadwalkan Ulang Pengiriman</h2>
+    <p id="rs-sub">Pilih tanggal pengiriman baru. Akan tampil di bawah tanggal asli.</p>
+    <input type="date" id="rs-date" class="modal-field">
+    <div class="pw-err" id="rs-err">Pilih tanggal yang valid.</div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="rs-cancel">Batal</button>
+      <button class="btn-solid" id="rs-ok">Simpan tanggal</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="pw-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pw-title">
+    <div class="modal-ic">🔒</div>
+    <h2 id="pw-title">Masuk untuk mengedit</h2>
+    <p>Masuk untuk mengubah status pengiriman. Pengemudi hanya dapat mengubah pengiriman miliknya sendiri.</p>
+    <select id="pw-user" class="modal-field">
+      <option value="">Siapa Anda?</option>
+      <option value="Alfian">Alfian (pengemudi)</option>
+      <option value="Figo">Figo (pengemudi)</option>
+      <option value="Sisko">Sisko (pengemudi)</option>
+      <option value="Wayan">Wayan (pengemudi)</option>
+      <option value="Kadek">Kadek (pengemudi)</option>
+      <option value="Aziz">Aziz (pengemudi)</option>
+      <option value="Manager">Manajer (semua pengiriman)</option>
+    </select>
+    <input type="password" id="pw-input" class="modal-field" placeholder="Kata sandi" autocomplete="off">
+    <div class="pw-err" id="pw-err">Nama atau kata sandi salah. Coba lagi.</div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="pw-cancel">Batal</button>
+      <button class="btn-solid" id="pw-ok">Masuk</button>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script id="bootstrap-data" type="application/json">{"stores": [{"s": "ADI SHOP", "a": "Ubud"}, {"s": "WARUNG MADE", "a": "Canggu"}, {"s": "BALI DELI", "a": "Seminyak"}, {"s": "SARI MINIMART", "a": "Kuta"}, {"s": "KEDAI UBUD", "a": "Denpasar"}, {"s": "CANGGU MART", "a": "Sanur"}, {"s": "SEMINYAK STORE", "a": "Jimbaran"}, {"s": "KUTA BEACH SHOP", "a": "Amed"}, {"s": "SANUR FRESH", "a": "Ubud"}, {"s": "JIMBARAN POS", "a": "Canggu"}, {"s": "DENPASAR CENTRAL", "a": "Seminyak"}, {"s": "AMED DIVE CAFE", "a": "Kuta"}, {"s": "TAMAN SARI", "a": "Denpasar"}, {"s": "PANTAI INDAH", "a": "Sanur"}, {"s": "GUNUNG MART", "a": "Jimbaran"}, {"s": "DEWATA SHOP", "a": "Amed"}, {"s": "MELATI MINI", "a": "Ubud"}, {"s": "CEMPAKA STORE", "a": "Canggu"}, {"s": "TEGALLALANG POS", "a": "Seminyak"}, {"s": "LOVINA MART", "a": "Kuta"}, {"s": "BATU BOLONG", "a": "Denpasar"}, {"s": "ECHO BEACH KIOSK", "a": "Sanur"}, {"s": "SIDEMEN WARUNG", "a": "Jimbaran"}, {"s": "NUSA DUA DELI", "a": "Amed"}, {"s": "LEGIAN SHOP", "a": "Ubud"}], "deliveries": [{"id": "ORD-1000", "date": "2026-11-22", "store": "ADI SHOP", "loc": "Ubud", "driver": "Alfian", "car": "Traga", "status": "Delivered", "qty": 48}, {"id": "ORD-1001", "date": "2026-11-24", "store": "WARUNG MADE", "loc": "Canggu", "driver": "Figo", "car": "L300 (1)", "status": "To Be Delivered", "qty": 18}, {"id": "ORD-1002", "date": "2026-11-23", "store": "BALI DELI", "loc": "Seminyak", "driver": "Sisko", "car": "L300 (2)", "status": "On Process", "qty": 48, "pickup": {"reason": "Rejected", "qty": 5, "note": "Short date — swap"}}, {"id": "ORD-1003", "date": "2026-11-22", "store": "SARI MINIMART", "loc": "Kuta", "driver": "Wayan", "car": "Traga", "status": "Pending", "qty": 24}, {"id": "ORD-1004", "date": "2026-11-21", "store": "KEDAI UBUD", "loc": "Denpasar", "driver": "Kadek", "car": "L300 (1)", "status": "To Be Delivered", "qty": 12, "reschedule": "2026-11-23"}, {"id": "ORD-1005", "date": "2026-11-23", "store": "CANGGU MART", "loc": "Sanur", "driver": "Aziz", "car": "L300 (2)", "status": "On Process", "qty": 36}, {"id": "ORD-1006", "date": "2026-11-21", "store": "SEMINYAK STORE", "loc": "Jimbaran", "driver": "Alfian", "car": "Traga", "status": "Pending", "qty": 18}, {"id": "ORD-1007", "date": "2026-11-25", "store": "KUTA BEACH SHOP", "loc": "Amed", "driver": "Figo", "car": "L300 (1)", "status": "To Be Delivered", "qty": 18}, {"id": "ORD-1008", "date": "2026-11-26", "store": "SANUR FRESH", "loc": "Ubud", "driver": "Sisko", "car": "L300 (2)", "status": "To Be Delivered", "qty": 36}, {"id": "ORD-1009", "date": "2026-11-24", "store": "JIMBARAN POS", "loc": "Canggu", "driver": "Wayan", "car": "Traga", "status": "To Be Delivered", "qty": 60, "pickup": {"reason": "Rejected", "qty": 2, "note": "Short date — swap"}}, {"id": "ORD-1010", "date": "2026-11-25", "store": "DENPASAR CENTRAL", "loc": "Seminyak", "driver": "Kadek", "car": "L300 (1)", "status": "To Be Delivered", "qty": 24}, {"id": "ORD-1011", "date": "2026-11-24", "store": "AMED DIVE CAFE", "loc": "Kuta", "driver": "Aziz", "car": "L300 (2)", "status": "To Be Delivered", "qty": 18}, {"id": "ORD-1012", "date": "2026-11-23", "store": "TAMAN SARI", "loc": "Denpasar", "driver": "Alfian", "car": "Traga", "status": "To Be Delivered", "qty": 12}, {"id": "ORD-1013", "date": "2026-11-22", "store": "PANTAI INDAH", "loc": "Sanur", "driver": "Figo", "car": "L300 (1)", "status": "To Be Delivered", "qty": 12, "reschedule": "2026-11-24"}, {"id": "ORD-1014", "date": "2026-11-24", "store": "GUNUNG MART", "loc": "Jimbaran", "driver": "Sisko", "car": "L300 (2)", "status": "To Be Delivered", "qty": 60}, {"id": "ORD-1015", "date": "2026-11-24", "store": "DEWATA SHOP", "loc": "Amed", "driver": "Wayan", "car": "Traga", "status": "To Be Delivered", "qty": 36}, {"id": "ORD-1016", "date": "2026-11-24", "store": "MELATI MINI", "loc": "Ubud", "driver": "Kadek", "car": "L300 (1)", "status": "To Be Delivered", "qty": 60}, {"id": "ORD-1017", "date": "2026-11-21", "store": "CEMPAKA STORE", "loc": "Canggu", "driver": "Aziz", "car": "L300 (2)", "status": "Pending", "qty": 24, "pickup": {"reason": "Rejected", "qty": 3, "note": "Melted tubs to collect"}}, {"id": "ORD-1018", "date": "2026-11-24", "store": "TEGALLALANG POS", "loc": "Seminyak", "driver": "Alfian", "car": "Traga", "status": "To Be Delivered", "qty": 60}, {"id": "ORD-1019", "date": "2026-11-24", "store": "LOVINA MART", "loc": "Kuta", "driver": "Figo", "car": "L300 (1)", "status": "To Be Delivered", "qty": 36}, {"id": "ORD-1020", "date": "2026-11-23", "store": "BATU BOLONG", "loc": "Denpasar", "driver": "Sisko", "car": "L300 (2)", "status": "Delivered", "qty": 12}, {"id": "ORD-1021", "date": "2026-11-21", "store": "ECHO BEACH KIOSK", "loc": "Sanur", "driver": "Wayan", "car": "Traga", "status": "Pending", "qty": 18}]}</script>
+<script>
+/* ---------- Dummy data ---------- */
+const drivers = {
+  Alfian:  {color:'#0e7090'},   // teal
+  Figo: {color:'#b54708'},   // amber-brown
+  Sisko: {color:'#b42318'},   // brand-adjacent red
+  Wayan: {color:'#067647'},   // green
+  Kadek: {color:'#6941c6'},   // violet
+  Aziz: {color:'#c11574'}     // magenta
+};
+/* Each store has a timeline of deliveries around today (the real current date).
+   Status rule by date:
+     past   -> Delivered or Pending           (default Delivered)
+     today  -> On Process, Delivered, Pending  (default On Process)
+     future -> To Be Delivered or Pending      (default To Be Delivered) */
+const isoDate = dt => { const d=new Date(dt); d.setHours(0,0,0,0);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const TODAY = isoDate(new Date());
+// four days before -> three days after today, so there is always past / today / future
+const allDates = [-4,-3,-2,-1,0,1,2,3].map(off => { const d=new Date(); d.setDate(d.getDate()+off); return isoDate(d); });
+function statusFor(d, i){
+  if(d < TODAY) return (i % 4 === 0) ? 'Pending' : 'Delivered';          // past: mostly delivered, some missed
+  if(d > TODAY) return 'To Be Delivered';                               // future: always To Be Delivered
+  const m = i % 3;                                                       // today: spread across the three
+  return m === 0 ? 'On Process' : m === 1 ? 'Delivered' : 'Pending';
+}
+// which statuses may be chosen for an order, based on its date
+function allowedStatuses(o){
+  // once rescheduled, the new date drives everything:
+  //   before the new date  -> To Be Delivered (not yet due)
+  //   on the new date       -> On Process / Delivered / Pending
+  if(o.reschedule){
+    if(o.reschedule > TODAY) return ['To Be Delivered'];
+    if(o.reschedule === TODAY) return ['On Process','Delivered','Pending'];
+    return ['Delivered','Pending'];
+  }
+  if(o.date < TODAY) return ['Delivered','Pending'];               // past
+  if(o.date > TODAY) return ['To Be Delivered'];                   // future
+  return ['On Process','Delivered','Pending'];                     // today
+}
+// keep an order's stored status valid for its (possibly rescheduled) date
+function fixStatus(o){
+  if(allowedStatuses(o).includes(o.status)) return;
+  const eff = o.reschedule || o.date;
+  o.status = eff > TODAY ? 'To Be Delivered' : eff < TODAY ? 'Pending' : 'On Process';
+}
+const storeMaster = [];  // loaded live from the Google Sheet (Stores tab)
+const storeDefs = [
+  {store:"ADI SHOP", loc:"Amed", driver:"Alfian", car:"Traga"},
+  {store:"BLUE EARTH VILLAGE (THE HILL PROJECT)", loc:"Amed", driver:"Figo", car:"L300 (1)"},
+  {store:"Circle K Royal Tulip (PT. Circleka Indonesia Utama)", loc:"Bedugul", driver:"Sisko", car:"L300 (2)"},
+  {store:"Circle K Saras Bedugul (PT. Circleka Indonesia Utama)", loc:"Bedugul", driver:"Wayan", car:"Traga"},
+  {store:"Circle K Bupda Canggu (PT. Circleka Indonesia Utama)", loc:"Canggu", driver:"Alfian", car:"L300 (1)"},
+  {store:"Circle K Pantai Berawa (PT. Circleka Indonesia Utama)", loc:"Canggu", driver:"Figo", car:"L300 (2)"},
+  {store:"MINI MART UM5 (GLOBAL RETAILINDO PRATAMA, PT)", loc:"Kerobokan", driver:"Sisko", car:"Traga"},
+  {store:"Mini Mart UML10 (Global Retailindo Pratama, PT)", loc:"Kerobokan", driver:"Wayan", car:"L300 (1)"},
+  {store:"Circle K Petitenget 199 (PT. CIRCLEKA INDONESIA UTAMA)", loc:"Kuta", driver:"Alfian", car:"L300 (2)"},
+  {store:"Circle K Beraban (PT. Circleka Indonesia Utama)", loc:"Kuta", driver:"Figo", car:"Traga"},
+  {store:"Circle K Tanah Lot (PT. CIRCLEKA INDONESIA UTAMA)", loc:"Tabanan", driver:"Sisko", car:"L300 (1)"},
+  {store:"Circle K Tumbak Banyuh Field (PT. Circleka Indonesia Utama)", loc:"Mengwi", driver:"Wayan", car:"L300 (2)"},
+  {store:"Mini Mart SM3 (Global Retailindo Pratama, PT)", loc:"Seminyak", driver:"Alfian", car:"Traga"},
+  {store:"Circle K Horizon Arjuna (PT. Circleka Indonesia Utama)", loc:"Seminyak", driver:"Figo", car:"L300 (1)"},
+  {store:"Sunset Corner", loc:"Tanah Lot", driver:"Sisko", car:"L300 (2)"},
+  {store:"Warung Taman Nirwana", loc:"Tanah Lot", driver:"Wayan", car:"Traga"},
+  {store:"Circle K Bali Kiddy (PT. Circleka Indonesia Utama)", loc:"Denpasar", driver:"Alfian", car:"L300 (1)"},
+  {store:"Grandlucky Udayana (PT. Mitra Belanja Anda)", loc:"Denpasar", driver:"Figo", car:"L300 (2)"},
+  {store:"CIRCLE K TITI BATU UBUD (PT. CIRCLEKA INDONESIA UTAMA)", loc:"ubud", driver:"Sisko", car:"Traga"},
+  {store:"Hotel Komune Bali Pool Bar (PT. Keramas Surfing Park)", loc:"ubud", driver:"Wayan", car:"L300 (1)"},
+  {store:"COCOMART BATUBULAN (PT. BALI PAWIWAHAN)", loc:"Gianyar", driver:"Alfian", car:"L300 (2)"},
+  {store:"COCOMART SUKAWATI (PT. BALI PAWIWAHAN)", loc:"Gianyar", driver:"Figo", car:"Traga"},
+  {store:"AYANA JIMBARAN HOTEL (PT. KARANG MAS SEJAHTERA)", loc:"Jimbaran", driver:"Sisko", car:"L300 (1)"},
+  {store:"COCOMART JIMBARAN (PT. BALI PAWIWAHAN)", loc:"Jimbaran", driver:"Wayan", car:"L300 (2)"},
+  {store:"Cocomart Taman Griya (PT. Bali Pawiwahan)", loc:"Nusadua", driver:"Alfian", car:"Traga"},
+  {store:"Amarterra Villas Resort (PT. Bali Star Resort Indah)", loc:"Nusadua", driver:"Figo", car:"L300 (1)"},
+  {store:"Circle K Kintamani Aksata (PT. Circleka Indonesia Utama)", loc:"Kintamani", driver:"Sisko", car:"L300 (2)"},
+  {store:"Circle K Kintamani Alvin (PT. Circleka Indonesia Utama)", loc:"Kintamani", driver:"Wayan", car:"Traga"},
+  {store:"Mini Mart KSQ (Global Retailindo Pratama, PT)", loc:"Sanur", driver:"Alfian", car:"L300 (1)"},
+  {store:"Circle K By Pass Sanur SPBU (PT. Circleka Indonesia Utama)", loc:"Sanur", driver:"Figo", car:"L300 (2)"},
+  {store:"Circle K Sriwijaya (PT. Circleka Indonesia Utama)", loc:"Legian", driver:"Sisko", car:"Traga"},
+  {store:"Circle K Sriwedari Ubud Spa (PT. CIRCLEKA INDONESIA UTAMA)", loc:"Ubud", driver:"Wayan", car:"L300 (1)"},
+  {store:"Cocomart Uluwatu (PT. Bali Pawiwahan)", loc:"Uluwatu", driver:"Alfian", car:"L300 (2)"},
+  {store:"ISLAND FOOD (LADANG UNTUNG, CV)", loc:"Uluwatu", driver:"Figo", car:"Traga"}
+];
+// Deliveries start empty — add them via Upload (or they load from the Google Sheet).
+const orders = [];
+let seq = 1040;
+/* ---------- State + render ---------- */
+const filters = {driver:'all', car:'all', status:'all', dateFrom:null, dateTo:null, pickup:'all', store:'all'};
+const statusClass = {'To Be Delivered':'b-tbd','On Process':'b-proc','Delivered':'b-deliv','Pending':'b-pend'};
+// Indonesian display labels (internal values stay English for the logic & Sheet)
+const statusLabel = {'To Be Delivered':'Akan Dikirim','On Process':'Sedang Proses','Delivered':'Terkirim','Pending':'Tertunda'};
+const reasonLabel = {'Rejected':'Ditolak','Nearly expired':'Hampir Kadaluarsa'};
+const stLabel = s => statusLabel[s] || s;
+const rsLabel = r => reasonLabel[r] || r;
+const fmtDate = iso => new Date(iso+'T00:00:00')
+  .toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+// render one or more proof-photo links (proof field may hold several URLs, newline-separated)
+function proofLinks(o){
+  if(!o.proof) return '';
+  const urls = String(o.proof).split(/\n+/).map(u => u.trim()).filter(Boolean);
+  if(urls.length <= 1) return `<a class="proof-lnk" href="${urls[0]||o.proof}" target="_blank" rel="noopener">📷 bukti</a>`;
+  return urls.map((u,i) => `<a class="proof-lnk" href="${u}" target="_blank" rel="noopener">📷 ${i+1}</a>`).join(' ');
+}
+function render(){
+  // everything except the Status filter — used for both the cards and (further filtered) the rows
+  const scope = orders.filter(o =>
+    (filters.driver==='all' || o.driver===filters.driver) &&
+    (filters.car==='all'    || o.car===filters.car) &&
+    (filters.dateFrom===null || (o.reschedule || o.date) >= filters.dateFrom) &&
+    (filters.dateTo===null   || (o.reschedule || o.date) <= filters.dateTo) &&
+    (filters.pickup==='all' || (filters.pickup==='yes' && o.pickup)) &&
+    (filters.store==='all'  || o.store.toLowerCase().includes(filters.store.toLowerCase()))
+  );
+  // cards summarise the current selection (e.g. one store's whole timeline, past → future)
+  document.getElementById('s-total').textContent = scope.length;
+  document.getElementById('s-tbd').textContent   = scope.filter(o=>o.status==='To Be Delivered').length;
+  document.getElementById('s-proc').textContent  = scope.filter(o=>o.status==='On Process').length;
+  document.getElementById('s-deliv').textContent = scope.filter(o=>o.status==='Delivered').length;
+  document.getElementById('s-pend').textContent  = scope.filter(o=>o.status==='Pending').length;
+  document.getElementById('s-resch').textContent = scope.filter(o=>o.reschedule && o.status!=='Delivered').length;
+  // rows: apply the status filter too, then order oldest → newest
+  const list = scope
+    .filter(o => filters.status==='all'
+              || (filters.status==='__resch' ? (!!o.reschedule && o.status!=='Delivered') : o.status===filters.status))
+    .sort((a,b) => (a.reschedule || a.date).localeCompare(b.reschedule || b.date) || a.id.localeCompare(b.id));
+  const body = document.getElementById('rows');
+  body.innerHTML = list.map(o=>{
+    const d = drivers[o.driver] || {color:'#98a2b3'};
+    const p = o.pickup;
+    return `<tr class="${p?'has-pickup':''}">
+      <td class="oid" data-label="Order">${o.id}<span class="odate">${fmtDate(o.date)}</span>${o.reschedule
+        ? `<span class="oresch${currentUser==='Manager'?' resch-edit':''}"${currentUser==='Manager'?` data-reschid="${o.id}" title="Ubah jadwal ulang"`:' title="Tanggal dijadwalkan ulang"'}>↻ resch: ${fmtDate(o.reschedule)}</span>`
+        : (currentUser==='Manager' && o.status==='Pending' ? `<button class="resch-btn" data-reschid="${o.id}" title="Jadwalkan ulang">🗓 Jadwalkan ulang</button>` : '')}${proofLinks(o)}</td>
+      <td class="store" data-label="Store"><b>${o.store}${p?'<span class="pk-flag" title="Pickup needed">⚠️</span>':''}</b><span>${o.loc}</span></td>
+      <td class="hide-sm qty" data-label="Qty">${o.qty} pcs</td>
+      <td data-label="Driver"><div class="driver${currentUser==='Manager'?' driver-edit':''}"${currentUser==='Manager'?` data-driverid="${o.id}" title="Ubah pengemudi"`:''}><span class="ava" style="background:${d.color}">${o.driver ? o.driver[0] : '?'}</span>${o.driver||'—'}${currentUser==='Manager'?'<span class="caret">▾</span>':''}</div></td>
+      <td class="hide-sm" data-label="Vehicle"><span class="car ${o.car.startsWith('L300')?'l300':'traga'}">${o.car}</span></td>
+      <td data-label="Status"><button class="badge ${statusClass[o.status]}${canEditRow(o)?' editable':''}" data-id="${o.id}"${canEditRow(o)?' title="Click to change status"':''}><span class="dot"></span>${stLabel(o.status)}${canEditRow(o)?'<span class="caret">▾</span>':''}</button></td>
+    </tr>${p?`<tr class="pickup-row"><td colspan="6">
+      <div class="pickup">
+        <span class="ic">📦</span>
+        <span class="txt"><b>Ambil ${p.qty} barang<span class="pk-tag">${rsLabel(p.reason)}</span></b><br>${p.note}</span>
+        ${canEditRow(o) && o.status==='Delivered' ? `<button class="pk-confirm" data-pk="${o.id}">✓ Sudah Diambil</button>` : ''}
+      </div></td></tr>`:''}<tr class="spacer"><td colspan="6"></td></tr>`;
+  }).join('');
+  document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+  // ----- compact card view (mobile) -----
+  const badge = o => `<button class="badge ${statusClass[o.status]}${canEditRow(o)?' editable':''}" data-id="${o.id}"${canEditRow(o)?' title="Change status"':''}><span class="dot"></span>${stLabel(o.status)}${canEditRow(o)?'<span class="caret">▾</span>':''}</button>`;
+  const cards = document.getElementById('cards');
+  cards.innerHTML = list.length ? list.map(o=>{
+    const d = drivers[o.driver] || {color:'#98a2b3'};
+    const p = o.pickup;
+    return `<div class="mcard${p?' has-pickup':''}">
+      <div class="mc-top">
+        <div class="mc-store"><b>${o.store}${p?'<span class="pk-flag" title="Pickup needed">⚠️</span>':''}</b><span>${o.loc}</span></div>
+        ${badge(o)}
+      </div>
+      <div class="mc-meta">
+        <span class="mc-driver${currentUser==='Manager'?' driver-edit':''}"${currentUser==='Manager'?` data-driverid="${o.id}"`:''}><span class="ava" style="background:${d.color}">${o.driver ? o.driver[0] : '?'}</span>${o.driver||'—'}${currentUser==='Manager'?'<span class="caret">▾</span>':''}</span>
+        <span class="car ${o.car.startsWith('L300')?'l300':'traga'}">${o.car}</span>
+        <span class="mc-qty">${o.qty} pcs</span>
+        <span class="mc-date">${fmtDate(o.date)}</span>
+        ${o.reschedule
+          ? `<span class="mc-resch${currentUser==='Manager'?' resch-edit':''}"${currentUser==='Manager'?` data-reschid="${o.id}" title="Ubah jadwal ulang"`:' title="Dijadwalkan ulang"'}>↻ ${fmtDate(o.reschedule)}</span>`
+          : (currentUser==='Manager' && o.status==='Pending' ? `<button class="resch-btn" data-reschid="${o.id}" title="Jadwalkan ulang">🗓</button>` : '')}
+        ${proofLinks(o)}
+      </div>
+      ${p?`<div class="pickup"><span class="ic">📦</span><span class="txt"><b>Ambil ${p.qty} barang<span class="pk-tag">${rsLabel(p.reason)}</span></b><br>${p.note}</span>${canEditRow(o) && o.status==='Delivered' ? `<button class="pk-confirm" data-pk="${o.id}">✓ Sudah Diambil</button>` : ''}</div>`:''}
+    </div>`;
+  }).join('') : `<div class="empty">Tidak ada pengiriman yang cocok dengan filter.</div>`;
+}
+// remaining chips (date "All dates") still use click; others are dropdowns now
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    const {type,val} = chip.dataset;
+    if(!type) return;
+    filters[type] = val;
+    document.querySelectorAll(`.chip[data-type="${type}"]`).forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    render();
+  });
+});
+/* ---------- Dropdown filters ---------- */
+const fDriver  = document.getElementById('f-driver');
+const fVehicle = document.getElementById('f-vehicle');
+const fStatus  = document.getElementById('f-status');
+const fPickup  = document.getElementById('f-pickup');
+fDriver.addEventListener('change', () => {
+  filters.driver = fDriver.value;
+  const mb = document.getElementById('mine-btn'); if(mb) mb.classList.remove('active');
+  render();
+});
+fVehicle.addEventListener('change', () => { filters.car    = fVehicle.value; render(); });
+fStatus .addEventListener('change', () => { filters.status = fStatus.value;  render(); });
+fPickup .addEventListener('change', () => { filters.pickup = fPickup.value;  render(); });
+/* ---------- Date range controls ---------- */
+const dateFrom = document.getElementById('date-from');
+const dateTo   = document.getElementById('date-to');
+const dateAll  = document.getElementById('date-all');
+function syncRange(){
+  filters.dateFrom = dateFrom.value || null;
+  filters.dateTo   = dateTo.value   || null;
+  // keep each picker's bound in sync so From can't exceed To
+  dateTo.min   = dateFrom.value || '';
+  dateFrom.max = dateTo.value   || '';
+  const anySet = filters.dateFrom || filters.dateTo;
+  dateAll.classList.toggle('active', !anySet);
+  render();
+}
+dateFrom.addEventListener('change', syncRange);
+dateTo.addEventListener('change', syncRange);
+dateAll.addEventListener('click', ()=>{
+  dateFrom.value = ''; dateTo.value = '';
+  filters.dateFrom = null; filters.dateTo = null;
+  dateFrom.max = ''; dateTo.min = '';
+  dateAll.classList.add('active');
+  render();
+});
+/* ---------- Store search (custom type-ahead, mobile-friendly) ---------- */
+const storePick = document.getElementById('store-pick');
+const storeNames = storeMaster.map(s => s.s).sort();
+const storeDD = document.createElement('div');   // panel on <body> so it isn't clipped
+storeDD.className = 'store-dd';
+document.body.appendChild(storeDD);
+function positionStoreDD(){
+  const r = storePick.getBoundingClientRect();
+  storeDD.style.left  = r.left + 'px';
+  storeDD.style.top   = (r.bottom + 5) + 'px';
+  storeDD.style.width = Math.max(r.width, 200) + 'px';
+}
+function buildStoreDD(){
+  const v = storePick.value.trim().toLowerCase();
+  const all = storeNames.filter(n => n.toLowerCase().includes(v));
+  const matches = all.slice(0, 6);            // keep the panel small so it doesn't cover the list
+  let html = `<button data-store="all" class="sd-all">All stores</button>`;
+  if(matches.length){
+    html += matches.map(n => `<button data-store="${n.replace(/"/g,'&quot;')}">${n}</button>`).join('');
+    if(all.length > matches.length) html += `<div class="empty-opt">+${all.length - matches.length} more — keep typing…</div>`;
+  } else {
+    html += `<div class="empty-opt">No stores match “${storePick.value.trim()}”</div>`;
+  }
+  storeDD.innerHTML = html;
+}
+function openStoreDD(){ buildStoreDD(); positionStoreDD(); storeDD.classList.add('open'); }
+function closeStoreDD(){ storeDD.classList.remove('open'); }
+storePick.addEventListener('focus', openStoreDD);
+storePick.addEventListener('input', () => {
+  filters.store = storePick.value.trim() === '' ? 'all' : storePick.value.trim();
+  render();                 // live filtering as you type
+  openStoreDD();            // keep suggestions in sync
+});
+storeDD.addEventListener('mousedown', e => {   // mousedown fires before input blur
+  const b = e.target.closest('button[data-store]');
+  if(!b) return;
+  e.preventDefault();
+  const val = b.dataset.store;
+  storePick.value = val === 'all' ? '' : val;
+  filters.store = val === 'all' ? 'all' : val;
+  closeStoreDD();
+  render();
+});
+document.addEventListener('click', e => {
+  if(e.target !== storePick && !storeDD.contains(e.target)) closeStoreDD();
+});
+window.addEventListener('scroll', () => { if(storeDD.classList.contains('open')) positionStoreDD(); }, true);
+window.addEventListener('resize', () => { if(storeDD.classList.contains('open')) positionStoreDD(); });
+/* ---------- Editable status (per-driver sign-in) ---------- */
+// Each driver signs in with their own password and can edit ONLY their own deliveries.
+// "Manager" can edit every delivery. Change these to set your own passwords.
+const ACCOUNTS = {
+  Alfian:     'alfian123',
+  Figo:    'figo123',
+  Sisko:    'sisko123',
+  Wayan:    'wayan123',
+  Kadek:    'kadek123',
+  Aziz:     'aziz123',
+  Manager: 'paletas2026'
+};
+let currentUser = null;                 // null = signed out
+let pendingBadge = null;
+// who may edit a given order
+function canEditRow(o){
+  return currentUser === 'Manager' || (currentUser && currentUser === o.driver);
+}
+const STATUSES = [
+  ['To Be Delivered','sm-tbd'],
+  ['On Process','sm-proc'],
+  ['Delivered','sm-deliv'],
+  ['Pending','sm-pend']
+];
+const statusMenu = document.createElement('div');
+statusMenu.className = 'status-menu';
+document.body.appendChild(statusMenu);
+let editId = null;
+function openStatusMenu(btn){
+  editId = btn.dataset.id;
+  const o = orders.find(x => x.id === editId);
+  const allowed = allowedStatuses(o);
+  const eff = o.reschedule || o.date;
+  // Terkirim can be set on the delivery day; a RESCHEDULED delivery whose date
+  // has passed may be back-dated to Terkirim (eff on/before today). An already
+  // Delivered row keeps the option shown so the record is preserved.
+  const canDeliver = o.reschedule ? (eff <= TODAY) : (eff === TODAY);
+  let selectable = allowed.slice();
+  if(!canDeliver && o.status !== 'Delivered') selectable = selectable.filter(s => s !== 'Delivered');
+  if(o.reschedule && eff < TODAY && !selectable.includes('Delivered') && o.status !== 'Delivered') selectable.push('Delivered');
+  const rTag = o.reschedule ? ` (dijadwalkan ulang ke ${fmtDate(o.reschedule)})` : '';
+  const note = canDeliver ? '' :
+    `<div class="sm-note">${eff < TODAY
+        ? 'Lewat tanggal — hanya bisa Tertunda'
+        : 'Belum waktunya — hanya Akan Dikirim'}${rTag}</div>`;
+  let html = note + STATUSES.filter(([s]) => selectable.includes(s)).map(([s,c]) =>
+    `<button class="${c} ${o.status===s?'sel':''}" data-status="${s}"><span class="dot"></span>${stLabel(s)}</button>`
+  ).join('');
+  // pickup can only be collected once the driver has actually made the delivery
+  if(o.pickup && o.status === 'Delivered'){
+    html += `<div class="sm-sep"></div>`;
+    html += `<button class="sm-action sm-pick" data-action="picked-up">✓ Tandai sudah diambil</button>`;
+  }
+  // manager can reschedule a Pending delivery
+  if(currentUser === 'Manager' && (o.status === 'Pending' || o.reschedule)){
+    html += `<div class="sm-sep"></div>`;
+    html += `<button class="sm-action" data-action="reschedule">🗓 ${o.reschedule ? 'Ubah tanggal jadwal ulang…' : 'Jadwalkan ulang…'}</button>`;
+    if(o.reschedule) html += `<button class="sm-action sm-clear" data-action="clear-resch">✕ Hapus jadwal ulang</button>`;
+  }
+  statusMenu.innerHTML = html;
+  statusMenu.classList.add('open');
+  const r = btn.getBoundingClientRect();
+  statusMenu.style.top = (window.scrollY + r.bottom + 6) + 'px';
+  let left = window.scrollX + r.left;
+  const maxLeft = window.scrollX + document.documentElement.clientWidth - statusMenu.offsetWidth - 8;
+  statusMenu.style.left = Math.max(8, Math.min(left, maxLeft)) + 'px';
+}
+function closeStatusMenu(){ statusMenu.classList.remove('open'); editId = null; }
+function onBadgeAreaClick(e){
+  const btn = e.target.closest('.badge');
+  if(!btn) return;
+  e.stopPropagation();
+  const o = orders.find(x => x.id === btn.dataset.id);
+  if(!currentUser){ pendingBadge = btn; openPwModal(); return; }        // must sign in
+  if(!canEditRow(o)){ toast(`Masuk sebagai ${currentUser} — hanya bisa mengubah pengiriman Anda.`); return; }
+  if(statusMenu.classList.contains('open') && editId === btn.dataset.id){ closeStatusMenu(); return; }
+  openStatusMenu(btn);
+}
+document.getElementById('rows').addEventListener('click', onBadgeAreaClick);
+document.getElementById('cards').addEventListener('click', onBadgeAreaClick);
+// "✓ Picked up" confirmation on the pickup banner
+function onPickupConfirm(e){
+  const btn = e.target.closest('.pk-confirm');
+  if(!btn) return;
+  e.stopPropagation();
+  const o = orders.find(x => x.id === btn.dataset.pk);
+  if(!o || !o.pickup) return;
+  if(!canEditRow(o)){ toast(`Masuk sebagai ${currentUser} — hanya bisa konfirmasi pengiriman Anda.`); return; }
+  if(o.status !== 'Delivered'){ toast('Tandai pengiriman Terkirim dulu.'); return; }
+  delete o.pickup;
+  bkClearPickup(o);
+  render();
+  toast(`Barang sudah diambil di ${o.store}.`);
+}
+document.getElementById('rows').addEventListener('click', onPickupConfirm);
+document.getElementById('cards').addEventListener('click', onPickupConfirm);
+statusMenu.addEventListener('click', e => {
+  const act = e.target.closest('button[data-action]');
+  if(act){
+    const o = orders.find(x => x.id === editId);
+    if(o){
+      if(act.dataset.action === 'picked-up' && canEditRow(o) && o.status === 'Delivered'){
+        delete o.pickup; bkClearPickup(o); closeStatusMenu(); render();
+        toast(`Barang sudah diambil di ${o.store}.`);
+      } else if(currentUser === 'Manager' && act.dataset.action === 'reschedule'){ openReschedule(o.id); }
+      else if(currentUser === 'Manager' && act.dataset.action === 'clear-resch'){ delete o.reschedule; fixStatus(o); bkClearResched(o); closeStatusMenu(); render(); }
+    }
+    return;
+  }
+  const b = e.target.closest('button[data-status]');
+  if(!b) return;
+  const o = orders.find(x => x.id === editId);
+  if(o && canEditRow(o) && allowedStatuses(o).includes(b.dataset.status)){
+    if(b.dataset.status === 'Delivered' && o.status !== 'Delivered'){
+      const eff = o.reschedule || o.date;
+      const canDeliver = o.reschedule ? (eff <= TODAY) : (eff === TODAY);   // rescheduled & past = back-date OK
+      if(!canDeliver){
+        closeStatusMenu();
+        toast(o.reschedule ? `Belum waktunya — dijadwalkan ulang ke ${fmtDate(o.reschedule)}.`
+                           : `Hanya bisa ditandai Terkirim pada tanggal pengiriman (${fmtDate(o.date)}).`);
+        return;
+      }
+      if(!o.proof){ closeStatusMenu(); openProof(o.id); return; }   // must attach a photo before Delivered
+    }
+    o.status = b.dataset.status;   // reschedule date is kept as history, even once Delivered
+    bkSetStatus(o);
+  }
+  closeStatusMenu();
+  render();
+});
+document.addEventListener('click', () => { if(statusMenu.classList.contains('open')) closeStatusMenu(); });
+window.addEventListener('scroll', () => { if(statusMenu.classList.contains('open')) closeStatusMenu(); }, true);
+window.addEventListener('resize', () => { if(statusMenu.classList.contains('open')) closeStatusMenu(); });
+/* ---------- Driver reassignment (Manager only) ---------- */
+const driverMenu = document.createElement('div');
+driverMenu.className = 'status-menu';
+document.body.appendChild(driverMenu);
+let driverEditId = null;
+function bkSetDriver(o){ if(BACKEND) srun('setDriverApi', o.id, o.driver).catch(()=>{}); }
+function openDriverMenu(el){
+  closeStatusMenu();
+  driverEditId = el.dataset.driverid;
+  const o = orders.find(x => x.id === driverEditId);
+  driverMenu.innerHTML = Object.keys(drivers).map(name =>
+    `<button data-driver="${name}" class="${o && o.driver===name?'sel':''}"><span class="ava-sm" style="background:${drivers[name].color}">${name[0]}</span>${name}</button>`
+  ).join('');
+  driverMenu.classList.add('open');
+  const r = el.getBoundingClientRect();
+  driverMenu.style.top = (window.scrollY + r.bottom + 6) + 'px';
+  const left = window.scrollX + r.left;
+  const maxLeft = window.scrollX + document.documentElement.clientWidth - driverMenu.offsetWidth - 8;
+  driverMenu.style.left = Math.max(8, Math.min(left, maxLeft)) + 'px';
+}
+function closeDriverMenu(){ driverMenu.classList.remove('open'); driverEditId = null; }
+function onDriverClick(e){
+  const el = e.target.closest('.driver-edit');
+  if(!el) return;
+  e.stopPropagation();
+  if(currentUser !== 'Manager'){ return; }
+  if(driverMenu.classList.contains('open') && driverEditId === el.dataset.driverid){ closeDriverMenu(); return; }
+  openDriverMenu(el);
+}
+document.getElementById('rows').addEventListener('click', onDriverClick);
+document.getElementById('cards').addEventListener('click', onDriverClick);
+// direct reschedule from a row (Manager only)
+function onReschClick(e){
+  const el = e.target.closest('[data-reschid]');
+  if(!el) return;
+  e.stopPropagation();
+  if(currentUser !== 'Manager') return;
+  openReschedule(el.dataset.reschid);
+}
+document.getElementById('rows').addEventListener('click', onReschClick);
+document.getElementById('cards').addEventListener('click', onReschClick);
+driverMenu.addEventListener('click', e => {
+  const b = e.target.closest('button[data-driver]');
+  if(!b) return;
+  const o = orders.find(x => x.id === driverEditId);
+  if(o && currentUser === 'Manager'){
+    o.driver = b.dataset.driver;
+    bkSetDriver(o);
+    closeDriverMenu();
+    render();
+    toast(`Pengemudi ${o.store} diubah ke ${o.driver}.`);
+  } else { closeDriverMenu(); }
+});
+document.addEventListener('click', () => { if(driverMenu.classList.contains('open')) closeDriverMenu(); });
+window.addEventListener('scroll', () => { if(driverMenu.classList.contains('open')) closeDriverMenu(); }, true);
+window.addEventListener('resize', () => { if(driverMenu.classList.contains('open')) closeDriverMenu(); });
+/* ---------- Toast ---------- */
+const toastEl = document.createElement('div');
+toastEl.className = 'toast';
+document.body.appendChild(toastEl);
+let toastTimer = null;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+}
+/* ---------- Sign-in / lock control ---------- */
+const pwOverlay = document.getElementById('pw-overlay');
+const pwUser    = document.getElementById('pw-user');
+const pwInput   = document.getElementById('pw-input');
+const pwErr     = document.getElementById('pw-err');
+const lockBtn   = document.getElementById('lock-btn');
+const lockLabel = document.getElementById('lock-label');
+const mineBtn   = document.getElementById('mine-btn');
+// jump the view to the signed-in driver's own stops
+function selectDriverChip(name){
+  filters.driver = name;
+  const sel = document.getElementById('f-driver'); if(sel) sel.value = name;
+}
+mineBtn.addEventListener('click', () => {
+  if(!currentUser || currentUser === 'Manager') return;
+  selectDriverChip(currentUser);
+  mineBtn.classList.add('active');
+  render();
+});
+function refreshLock(){
+  const signedIn = !!currentUser;
+  lockBtn.classList.toggle('unlocked', signedIn);
+  lockBtn.classList.toggle('locked', !signedIn);
+  lockLabel.textContent = signedIn ? currentUser + (currentUser==='Manager'?' · akses penuh':' · miliknya saja') : 'Masuk untuk mengedit';
+  lockBtn.querySelector('.lk-ic').textContent = signedIn ? '🔓' : '🔒';
+  lockBtn.title = signedIn ? 'Sudah masuk — klik untuk keluar' : 'Masuk untuk mengubah status';
+  // show "My deliveries" only for signed-in drivers
+  const showMine = signedIn && currentUser !== 'Manager';
+  mineBtn.style.display = showMine ? '' : 'none';
+  if(!showMine) mineBtn.classList.remove('active');
+  document.getElementById('upload-btn').style.display = currentUser === 'Manager' ? '' : 'none';
+}
+function openPwModal(){
+  pwUser.value = ''; pwInput.value = ''; pwErr.classList.remove('show');
+  pwOverlay.classList.add('open');
+  setTimeout(() => pwUser.focus(), 30);
+}
+function closePwModal(){ pwOverlay.classList.remove('open'); pendingBadge = null; }
+function trySignIn(){
+  const name = pwUser.value;
+  if(name && ACCOUNTS[name] && pwInput.value === ACCOUNTS[name]){
+    currentUser = name;
+    refreshLock();
+    render();                            // refresh which rows show the edit caret
+    pwOverlay.classList.remove('open');
+    const b = pendingBadge; pendingBadge = null;
+    // reopen the badge they clicked, if they're allowed to edit it
+    if(b){ const o = orders.find(x => x.id === b.dataset.id);
+      if(o && canEditRow(o)){ const live = [...document.querySelectorAll(`.badge[data-id="${o.id}"]`)].find(el => el.offsetParent !== null); if(live) openStatusMenu(live); }
+      else toast(`Masuk sebagai ${currentUser} — hanya bisa mengubah pengiriman Anda.`);
+    }
+  } else {
+    pwErr.classList.add('show');
+    pwInput.select();
+  }
+}
+document.getElementById('pw-ok').addEventListener('click', trySignIn);
+document.getElementById('pw-cancel').addEventListener('click', closePwModal);
+pwInput.addEventListener('keydown', e => { if(e.key === 'Enter') trySignIn(); });
+pwOverlay.addEventListener('click', e => { if(e.target === pwOverlay) closePwModal(); });
+lockBtn.addEventListener('click', () => {
+  if(currentUser){
+    currentUser = null;
+    selectDriverChip('all');   // return to all drivers
+    refreshLock(); render(); toast('Keluar.');
+  }
+  else openPwModal();
+});
+refreshLock();
+/* ---------- Reschedule (manager only) ---------- */
+const rsOverlay = document.getElementById('rs-overlay');
+const rsDate    = document.getElementById('rs-date');
+const rsErr     = document.getElementById('rs-err');
+const rsSub     = document.getElementById('rs-sub');
+let rsOrderId   = null;
+function openReschedule(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if(!o || currentUser !== 'Manager') return;
+  closeStatusMenu();
+  rsOrderId = orderId;
+  rsErr.classList.remove('show');
+  rsDate.removeAttribute('min');              // allow past dates (back-date to the actual delivery date)
+  rsDate.value = o.reschedule || '';
+  rsSub.textContent = `${o.store} — asalnya ${fmtDate(o.date)}. Pilih tanggal pengiriman sebenarnya (boleh tanggal lampau untuk mundur).`;
+  rsOverlay.classList.add('open');
+  setTimeout(() => rsDate.focus(), 30);
+}
+function closeReschedule(){ rsOverlay.classList.remove('open'); rsOrderId = null; }
+function saveReschedule(){
+  const o = orders.find(x => x.id === rsOrderId);
+  if(!o){ closeReschedule(); return; }
+  if(!rsDate.value){ rsErr.classList.add('show'); return; }
+  o.reschedule = rsDate.value;
+  fixStatus(o);              // future reschedule -> To Be Delivered
+  bkReschedule(o);
+  closeReschedule();
+  render();
+  toast(`${o.store} dijadwalkan ulang ke ${fmtDate(o.reschedule)}.`);
+}
+document.getElementById('rs-ok').addEventListener('click', saveReschedule);
+document.getElementById('rs-cancel').addEventListener('click', closeReschedule);
+rsDate.addEventListener('keydown', e => { if(e.key === 'Enter') saveReschedule(); });
+rsOverlay.addEventListener('click', e => { if(e.target === rsOverlay) closeReschedule(); });
+/* ---------- Proof of delivery (3 document photos required to mark Delivered) ---------- */
+const PROOF_COUNT = 3;   // slots available
+const PROOF_MIN   = 2;   // minimum required to confirm Delivered
+const PROOF_LABELS = ['Dokumen 1', 'Dokumen 2', 'Dokumen 3'];
+const proofOverlay = document.getElementById('proof-overlay');
+const proofSlots   = document.getElementById('proof-slots');
+const proofErr     = document.getElementById('proof-err');
+const proofConfirm = document.getElementById('proof-confirm');
+const proofSub     = document.getElementById('proof-sub');
+let proofId = null;
+let proofData = [];   // captured photos, one per slot
+// shrink a photo to keep the upload small and reliable
+function fileToDataUrl(file, maxDim, quality){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if(w > h){ if(w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; } }
+        else     { if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; } }
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        // stamp the date & time (device clock) onto the photo
+        const ts = new Date().toLocaleString('id-ID', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        const fs = Math.max(13, Math.round(w * 0.032));
+        ctx.font = `bold ${fs}px Arial, sans-serif`;
+        const pad = Math.round(fs * 0.5);
+        const tw = ctx.measureText(ts).width;
+        const bh = fs + pad * 2;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, h - bh, tw + pad * 2, bh);
+        ctx.fillStyle = '#fff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(ts, pad, h - bh / 2 + 1);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject; img.src = reader.result;
+    };
+    reader.onerror = reject; reader.readAsDataURL(file);
+  });
+}
+function proofUpdateConfirm(){
+  const done = proofData.filter(Boolean).length;
+  proofConfirm.disabled = done < PROOF_MIN;
+  proofConfirm.textContent = done < PROOF_MIN ? `Konfirmasi terkirim (${done}/${PROOF_MIN})` : 'Konfirmasi terkirim';
+}
+function openProof(id){
+  proofId = id;
+  proofData = new Array(PROOF_COUNT).fill(null);
+  const o = orders.find(x => x.id === id);
+  proofSub.textContent = o ? `${o.store} — ambil minimal ${PROOF_MIN} dari ${PROOF_COUNT} dokumen untuk menandai Terkirim.` : '';
+  proofErr.classList.remove('show'); proofErr.textContent = '';
+  // build the slots
+  let html = '';
+  for(let i = 0; i < PROOF_COUNT; i++){
+    html += `<div class="proof-slot">
+      <span class="lbl2">${PROOF_LABELS[i]}</span>
+      <button class="proof-take" data-i="${i}">📷 Ambil foto</button>
+      <img class="proof-thumb" data-i="${i}" alt="">
+      <input type="file" class="proof-input" data-i="${i}" accept="image/*" capture="environment" style="display:none">
+    </div>`;
+  }
+  proofSlots.innerHTML = html;
+  proofUpdateConfirm();
+  proofOverlay.classList.add('open');
+}
+function closeProof(){ proofOverlay.classList.remove('open'); proofId = null; proofData = []; proofSlots.innerHTML = ''; }
+// slot interactions (delegated)
+proofSlots.addEventListener('click', e => {
+  const b = e.target.closest('.proof-take');
+  if(!b) return;
+  proofSlots.querySelector(`.proof-input[data-i="${b.dataset.i}"]`).click();
+});
+proofSlots.addEventListener('change', async e => {
+  const inp = e.target.closest('.proof-input');
+  if(!inp) return;
+  const i = +inp.dataset.i;
+  const f = inp.files[0];
+  if(!f) return;
+  proofErr.classList.remove('show');
+  try {
+    const dataUrl = await fileToDataUrl(f, 1400, 0.7);
+    proofData[i] = dataUrl;
+    const thumb = proofSlots.querySelector(`.proof-thumb[data-i="${i}"]`);
+    thumb.src = dataUrl; thumb.style.display = 'block';
+    const btn = proofSlots.querySelector(`.proof-take[data-i="${i}"]`);
+    btn.classList.add('done'); btn.textContent = '✓ Ambil ulang';
+    proofUpdateConfirm();
+  } catch(err){
+    proofErr.textContent = 'Tidak dapat membaca foto. Coba lagi.'; proofErr.classList.add('show');
+  }
+});
+document.getElementById('proof-cancel').addEventListener('click', closeProof);
+proofOverlay.addEventListener('click', e => { if(e.target === proofOverlay) closeProof(); });
+proofConfirm.addEventListener('click', async () => {
+  const photos = proofData.filter(Boolean);
+  if(photos.length < PROOF_MIN){ proofErr.textContent = `Ambil minimal ${PROOF_MIN} foto dulu.`; proofErr.classList.add('show'); return; }
+  const o = orders.find(x => x.id === proofId);
+  if(!o){ closeProof(); return; }
+  if(BACKEND){
+    proofConfirm.disabled = true; proofConfirm.textContent = 'Menyimpan…';
+    try {
+      const res = await srun('saveProofApi', proofId, photos);
+      o.status = 'Delivered';
+      if(res && res.urls) o.proof = res.urls.join('\n');
+    } catch(err){
+      proofErr.textContent = 'Gagal menyimpan foto: ' + err; proofErr.classList.add('show');
+      proofUpdateConfirm();
+      return;
+    }
+  } else {
+    o.status = 'Delivered'; o.proof = photos.join('\n');   // plain file: keep in memory
+  }
+  render(); closeProof(); toast(`Terkirim — ${photos.length} dokumen tersimpan untuk ${o.store}.`);
+});
+/* ---------- Upload deliveries (CSV / Excel, manager only) ---------- */
+const upOverlay = document.getElementById('up-overlay');
+const upFile    = document.getElementById('up-file') || document.getElementById('upload-file');
+const upErr     = document.getElementById('up-err');
+const _storeLoc = {}; storeMaster.forEach(s => _storeLoc[s.s] = s.a);
+function newDeliveryStatus(date){
+  return date > TODAY ? 'To Be Delivered' : date === TODAY ? 'On Process' : 'Pending';
+}
+function nextOrderId(){
+  const max = orders.reduce((m,o)=>{ const n=parseInt(String(o.id).replace('ICE-',''),10); return n>m?n:m; }, 1000);
+  return 'ICE-' + (max + 1);
+}
+function normDate(v){
+  if(v instanceof Date && !isNaN(v)){
+    // spreadsheet Date objects are anchored to UTC midnight of the intended day
+    return `${v.getUTCFullYear()}-${String(v.getUTCMonth()+1).padStart(2,'0')}-${String(v.getUTCDate()).padStart(2,'0')}`;
+  }
+  const s = String(v).trim();
+  if(!s) return null;
+  let m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);   // year-first: 2026-08-24 or 2026/8/24
+  if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);       // day-first: 24/8/2026
+  if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  const d = new Date(s);
+  return isNaN(d) ? null : isoDate(d);
+}
+document.getElementById('upload-btn').addEventListener('click', () => {
+  if(currentUser !== 'Manager') return;
+  upErr.classList.remove('show'); upErr.textContent = '';
+  document.querySelector('.up-tab[data-uptab="del"]').click();   // default to Deliveries tab
+  upOverlay.classList.add('open');
+});
+function closeUp(){ upOverlay.classList.remove('open'); }
+document.getElementById('up-cancel').addEventListener('click', closeUp);
+upOverlay.addEventListener('click', e => { if(e.target === upOverlay) closeUp(); });
+let upMode = 'del';   // which file/paste we're importing
+// tabs
+document.querySelectorAll('.up-tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.up-tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  upMode = t.dataset.uptab;
+  document.getElementById('up-pane-del').style.display  = upMode === 'del'  ? '' : 'none';
+  document.getElementById('up-pane-pick').style.display = upMode === 'pick' ? '' : 'none';
+  upErr.classList.remove('show');
+}));
+// parse pasted text (tab from Sheets/Excel, or CSV) -> array of {header:value}
+function parsePasteText(text){
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if(lines.length < 2) return null;
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+  const split = line => delim === '\t' ? line.split('\t')
+    : line.match(/("([^"]|"")*"|[^,]*)(,|$)/g).slice(0,-1).map(c => c.replace(/,$/,'').replace(/^"|"$/g,'').replace(/""/g,'"'));
+  const headers = split(lines[0]).map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const cells = split(line);
+    const rec = {}; headers.forEach((h,i) => rec[h] = (cells[i]||'').trim());
+    return rec;
+  });
+}
+// add DELIVERIES
+function addRecords(records){
+  let added = 0; const errors = []; const payload = [];
+  records.forEach((r, i) => {
+    const g = k => { for(const key in r){ if(String(key).trim().toLowerCase() === k) return r[key]; } return ''; };
+    const store = String(g('store')).trim();
+    if(!store) return;
+    const date = normDate(g('date'));
+    if(!date){ errors.push(`Row ${i+2}: missing/invalid date`); return; }
+    const qty = parseInt(g('qty') || g('quantity'), 10) || 0;
+    const driver = String(g('driver')).trim();
+    let veh = String(g('vehicle') || g('car')).trim();
+    if(/^l300$/i.test(veh)) veh = 'L300 (1)';
+    const loc = String(g('location') || g('loc')).trim() || _storeLoc[store] || '';
+    payload.push({ store, loc, area:loc, qty, driver, car: veh || 'Traga', vehicle: veh || 'Traga',
+      status: newDeliveryStatus(date), date });
+    added++;
+  });
+  return { added, errors, payload, noun:'delivery' };
+}
+// add PICKUPS (reject / nearly expired) onto existing deliveries
+function addPickupRecords(records){
+  let added = 0; const errors = []; const pickups = [];
+  records.forEach((r, i) => {
+    const g = k => { for(const key in r){ if(String(key).trim().toLowerCase() === k) return r[key]; } return ''; };
+    const idv = String(g('order') || g('id')).trim();
+    const store = String(g('store')).trim();
+    const date = normDate(g('date'));
+    let o = null;
+    if(idv) o = orders.find(x => String(x.id).toLowerCase() === idv.toLowerCase());
+    if(!o && store){
+      const sl = store.toLowerCase();
+      let cand = orders.filter(x => String(x.store).trim().toLowerCase() === sl);
+      if(date){
+        const byDate = cand.filter(x => x.date === date || (x.reschedule || '') === date);
+        if(byDate.length) cand = byDate;      // narrow by date only if some match
+      }
+      o = cand.find(x => !x.pickup) || cand[0];
+    }
+    if(!o){ errors.push(`Row ${i+2}: no delivery on the board for "${store||idv}"`); return; }
+    const rn = String(g('reason')).trim().toLowerCase();
+    const reason = rn.includes('reject') ? 'Rejected'
+                 : (rn.includes('near') || rn.includes('expir')) ? 'Nearly expired'
+                 : (String(g('reason')).trim() || 'Rejected');
+    const qty = parseInt(g('qty') || g('quantity'), 10) || 1;
+    const note = String(g('note') || g('notes')).trim();
+    o.pickup = { reason, qty, note };
+    pickups.push({ id: o.id, reason, qty, note });
+    added++;
+  });
+  return { added, errors, noun:'pickup', pickups };
+}
+function showUpErr(msg){ upErr.textContent = msg; upErr.classList.add('show'); }
+async function commitUpload(res){
+  const { added, errors, noun } = res;
+  if(!added && !errors.length){
+    showUpErr(noun === 'pickup'
+      ? 'Tidak ada pengiriman yang cocok. Periksa nama toko dan tanggal.'
+      : 'Tidak ada baris valid. Periksa baris judul dan format tanggal (YYYY-MM-DD).');
+    return;
+  }
+  // DELIVERIES: write to the Google Sheet when connected, then refresh in place
+  if(noun === 'delivery'){
+    if(BACKEND){
+      try {
+        await srun('addDeliveriesApi', res.payload);   // save to Sheet
+        await refreshData();                            // pull fresh data (with real IDs) and re-render
+      } catch(err){
+        showUpErr('Gagal menyimpan ke server: ' + err + '. Deploy ulang Apps Script (versi baru) dan jalankan setup().');
+        return;
+      }
+      closeUp(); toast(`${added} pengiriman ditambahkan.`);
+      return;
+    } else {
+      res.payload.forEach(p => orders.push({ id: nextOrderId(), store:p.store, loc:p.loc, qty:p.qty,
+        driver:p.driver, car:p.car, status:p.status, date:p.date }));
+      render();
+    }
+  } else {
+    if(BACKEND){
+      try {
+        await Promise.all(res.pickups.map(p => srun('setPickupApi', p.id, p.reason, p.qty, p.note)));
+      } catch(err){
+        showUpErr('Gagal menyimpan pengambilan ke server: ' + err);
+        return;
+      }
+    }
+    render();   // pickups already applied to the on-screen deliveries; no reload needed
+    if(errors.length){
+      showUpErr(`Ditambahkan ${added}. Dilewati ${errors.length}: ` + errors.slice(0,3).join('; ') + (errors.length>3?'…':''));
+    } else {
+      closeUp(); toast(`${added} pengambilan ditambahkan.`);
+    }
+    return;
+  }
+  if(errors.length){
+    showUpErr(`Ditambahkan ${added}. Dilewati ${errors.length}: ` + errors.slice(0,3).join('; ') + (errors.length>3?'…':''));
+  } else {
+    closeUp(); toast(`${added} ${noun}${added>1?'s':''} added.`);
+  }
+}
+function handlePaste(textareaId, adder){
+  upErr.classList.remove('show');
+  const text = document.getElementById(textareaId).value.trim();
+  if(!text){ showUpErr('Tempel data baris terlebih dahulu.'); return; }
+  const records = parsePasteText(text);
+  if(!records){ showUpErr('Sertakan baris judul dan minimal satu baris data.'); return; }
+  commitUpload(adder(records));
+}
+document.getElementById('up-paste-add').addEventListener('click', () => handlePaste('up-paste', addRecords));
+document.getElementById('up-pk-add').addEventListener('click', () => handlePaste('up-pk-paste', addPickupRecords));
+// file upload (choose sets mode)
+document.getElementById('up-choose').addEventListener('click', () => { upMode='del'; document.getElementById('upload-file').click(); });
+document.getElementById('up-pk-choose').addEventListener('click', () => { upMode='pick'; document.getElementById('upload-file').click(); });
+document.getElementById('upload-file').addEventListener('change', ev => {
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:'', raw:false, dateNF:'yyyy-mm-dd' });
+      commitUpload(upMode === 'pick' ? addPickupRecords(rows) : addRecords(rows));
+    } catch(err) {
+      showUpErr('Tidak dapat membaca file. Gunakan CSV atau Excel (.xlsx), atau tempel datanya.');
+    }
+    ev.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+});
+// templates
+function downloadCsv(name, csv){
+  const blob = new Blob([csv], { type:'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+document.getElementById('up-template').addEventListener('click', () => {
+  downloadCsv('deliveries-template.csv',
+    'store,location,driver,vehicle,date,qty\n'
+    + `ADI SHOP,Amed,Alfian,Traga,${TODAY},24\n`
+    + `Circle K Bupda Canggu (PT. Circleka Indonesia Utama),Canggu,Figo,L300 (1),${TODAY},12\n`);
+});
+document.getElementById('up-pk-template').addEventListener('click', () => {
+  downloadCsv('pickups-template.csv',
+    'store,date,reason,qty,note\n'
+    + `ADI SHOP,${TODAY},Rejected,3,"Melted tubs to collect"\n`
+    + `Circle K Bupda Canggu (PT. Circleka Indonesia Utama),${TODAY},Nearly expired,2,"Swap expiring bars"\n`);
+});
+/* ---------- Clock ---------- */
+function tick(){
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    n.toLocaleTimeString('en-GB',{hour12:false});
+}
+setInterval(tick,1000); tick();
+/* ---------- View toggle (Phone / Laptop) ---------- */
+const viewBtns = document.querySelectorAll('.vt-btn');
+function setView(mode){                     // 'phone' | 'laptop'
+  const phone = mode === 'phone';
+  document.body.classList.toggle('phone-mode', phone);
+  // "forced" narrows the layout to a phone-like column when phone view is chosen on a wide screen
+  document.body.classList.toggle('forced', phone && !window.matchMedia('(max-width:640px)').matches);
+  viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === mode));
+}
+viewBtns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+// default to whichever matches the current screen size
+setView(window.matchMedia('(max-width:640px)').matches ? 'phone' : 'laptop');
+/* ---------- Backend (Google Apps Script) ---------- */
+// Loading uses data the server injected into the page (reliable — no google.script.run needed).
+// Writes (upload/status/reschedule/pickup) still call the server; the page then reloads to pull fresh data.
+const BACKEND = (typeof google !== 'undefined' && google.script && google.script.run);
+function srun(fn, ...args){
+  return new Promise((resolve, reject) => {
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args);
+  });
+}
+function rebuildStoreIndexes(){
+  storeNames.length = 0;
+  storeMaster.map(s => s.s).sort().forEach(n => storeNames.push(n));
+  for(const k in _storeLoc) delete _storeLoc[k];
+  storeMaster.forEach(s => _storeLoc[s.s] = s.a);
+}
+function applyData(data){
+  if(data && Array.isArray(data.stores) && data.stores.length){
+    storeMaster.length = 0; data.stores.forEach(s => storeMaster.push(s));
+    rebuildStoreIndexes();
+  }
+  if(data && Array.isArray(data.deliveries)){
+    orders.length = 0;
+    data.deliveries.forEach(o => {
+      o.date = normDate(o.date) || o.date;
+      if(o.reschedule) o.reschedule = normDate(o.reschedule) || o.reschedule;
+      o.qty = parseInt(o.qty, 10) || 0;
+      o.store = String(o.store || '').trim(); o.loc = String(o.loc || '').trim();
+      o.driver = String(o.driver || '').trim(); o.car = String(o.car || '').trim();
+      o.status = String(o.status || '').trim();
+      fixStatus(o);   // past-due & not Delivered -> Pending automatically
+      orders.push(o);
+    });
+  }
+  render();
+}
+// fire-and-forget save helpers (no-op when running as a plain file)
+function bkSetStatus(o){ if(BACKEND) srun('setStatusApi', o.id, o.status).catch(()=>{}); }
+function bkReschedule(o){ if(BACKEND){ srun('rescheduleApi', o.id, o.reschedule||'').catch(()=>{}); srun('setStatusApi', o.id, o.status).catch(()=>{}); } }
+function bkClearResched(o){ if(BACKEND){ srun('clearReschedApi', o.id).catch(()=>{}); srun('setStatusApi', o.id, o.status).catch(()=>{}); } }
+function bkSetPickup(o){ if(BACKEND && o.pickup) srun('setPickupApi', o.id, o.pickup.reason, o.pickup.qty, o.pickup.note).catch(()=>{}); }
+function bkClearPickup(o){ if(BACKEND) srun('clearPickupApi', o.id).catch(()=>{}); }
+// pull the latest data from the server and re-render in place (no page reload)
+async function refreshData(){
+  if(!BACKEND) return;
+  const data = await srun('getDataApi');
+  applyData(data);
+}
+// Refresh = re-fetch from the Sheet and re-render (no reload, so it can't blank)
+document.getElementById('refresh-btn').addEventListener('click', () => {
+  if(!BACKEND){ toast('Tidak terhubung — buka dari URL Apps Script.'); return; }
+  toast('Memuat ulang…');
+  refreshData().catch(err => toast('Gagal memuat ulang: ' + err));
+});
+/* ---------- Auto-refresh every 30s (pauses during any edit) ---------- */
+function isBusy(){
+  if(document.querySelector('.modal-overlay.open')) return true;   // a modal is open
+  if(statusMenu.classList.contains('open')) return true;           // status menu open
+  if(driverMenu.classList.contains('open')) return true;           // driver menu open
+  if(storeDD.classList.contains('open')) return true;              // store search open
+  if(document.activeElement === storePick) return true;            // typing in store search
+  return false;
+}
+function autoRefresh(){
+  if(!BACKEND || document.hidden || isBusy()) return;   // skip if hidden or mid-action
+  refreshData().catch(() => {});                        // silent background update
+}
+if(BACKEND){ setInterval(autoRefresh, 30000); }
+// Load: use the injected data if present, else render empty (or sample when a plain file)
+let BOOTSTRAP = null;
+try { BOOTSTRAP = JSON.parse(document.getElementById('bootstrap-data').textContent); } catch(e) { BOOTSTRAP = null; }
+if(BOOTSTRAP){ applyData(BOOTSTRAP); } else { render(); }
+</script>
+</body>
+</html>
